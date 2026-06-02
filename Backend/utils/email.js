@@ -1,17 +1,14 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-/**
- * Send Email
- * Sends an email using Resend API
- */
 export async function sendEmail({ to, subject, html }) {
+  const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "E-Waste Platform <onboarding@resend.dev>";
 
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY missing in environment variables");
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY missing in .env");
   }
+
+  const resend = new Resend(apiKey);
 
   const { data, error } = await resend.emails.send({
     from,
