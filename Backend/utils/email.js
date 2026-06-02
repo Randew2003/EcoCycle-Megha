@@ -1,31 +1,28 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Send Email
- * Sends an email using configured SMTP transport
+ * Sends an email using Resend API
  */
 export async function sendEmail({ to, subject, html }) {
-  const host = process.env.EMAIL_HOST;
-  const port = parseInt(process.env.EMAIL_PORT || "587", 10);
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
-  const from = process.env.EMAIL_FROM || user;
+  const from = process.env.EMAIL_FROM || "E-Waste Platform <onboarding@resend.dev>";
 
-  if (!host || !user || !pass) {
-    throw new Error("Email config missing in .env (EMAIL_HOST/USER/PASS)");
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY missing in environment variables");
   }
 
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: false,
-    auth: { user, pass },
-  });
-
-  await transporter.sendMail({
+  const { data, error } = await resend.emails.send({
     from,
     to,
     subject,
     html,
   });
+
+  if (error) {
+    throw new Error(error.message || "Email sending failed");
+  }
+
+  return data;
 }
