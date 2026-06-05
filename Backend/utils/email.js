@@ -16,10 +16,11 @@ export async function sendEmail({ to, subject, html }) {
   }
 
   const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, 
     auth: { user, pass },
+    family: 4, // Use IPv4 to avoid potential issues with IPv6
   });
 
   await transporter.sendMail({

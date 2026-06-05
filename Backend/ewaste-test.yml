@@ -1,0 +1,23 @@
+config:
+  target: "http://localhost:5050"
+  phases:
+    - duration: 30
+      arrivalRate: 5   # 5 users per second
+
+scenarios:
+  - name: "E-waste API Load Test"
+    flow:
+      - get:
+          url: "/api/ewaste"
+
+      - post:
+          url: "/api/ewaste"
+          json:
+            deviceType: "Mobile"
+            brand: "Samsung"
+            condition: "Used"
+            age: 2
+            weight: 0.5
+            disposalType: "Recycle"
+
+      - think: 2
