@@ -64,8 +64,9 @@ export const register = async (req, res, next) => {
 
   // IMPORTANT: still return success OR controlled failure
   return res.status(500).json({
-    message: "User created but email failed to send",
-    error: process.env.NODE_ENV === "development" ? emailErr.message : undefined
+    message: "Email failed",
+    error: emailErr.message,
+    stack: emailErr.stack
   });
   }
 
