@@ -1,0 +1,37 @@
+config:
+  target: "http://localhost:5050"
+  phases:
+    - duration: 30
+      arrivalRate: 3
+
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Users API Load Test"
+    flow:
+
+      # 🔐 LOGIN (no token needed initially)
+      - post:
+          url: "/api/users/login"
+          json:
+            email: "oshadhaworking@gmail.com"
+            password: "oshadha2002"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # 👤 GET PROFILE
+      - get:
+          url: "/api/users/me"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      # ✏️ UPDATE PROFILE
+      - patch:
+          url: "/api/users/me"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            fullName: "Updated User"

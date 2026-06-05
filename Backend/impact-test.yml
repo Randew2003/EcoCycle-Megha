@@ -1,0 +1,35 @@
+config:
+  target: "http://localhost:5050"
+  phases:
+    - duration: 30
+      arrivalRate: 3   # keep low to avoid rate limit
+
+scenarios:
+  - name: "Impact Logs Load Test"
+    flow:
+
+      # 🔐 Login
+      - post:
+          url: "/api/users/login"
+          json:
+            email: "oshadhaworking@gmail.com"
+            password: "oshadha2002"   # use your real password
+          capture:
+            - json: "$.token"
+              as: "token"
+
+      # ➕ Create Impact Log
+      - post:
+          url: "/api/impact-logs"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            actionType: "RECYCLE"
+            category: "EWASTE"
+            weightKg: 1.5
+
+      # 📊 Get Impact Logs
+      - get:
+          url: "/api/impact-logs"
+          headers:
+            Authorization: "Bearer {{ token }}"

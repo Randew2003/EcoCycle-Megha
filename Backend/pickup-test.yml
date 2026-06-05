@@ -1,0 +1,20 @@
+config:
+  target: "http://localhost:5050"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+
+scenarios:
+  - name: "Pickup Requests Load Test"
+    flow:
+      # ♻️ Recycler - view all pickup requests
+      - get:
+          url: "/api/pickups"
+          headers:
+            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZGE4NGFkNWQ3ZjU4MDllZjYwZTAwMiIsInJvbGUiOiJSRUNZQ0xFUiIsImlhdCI6MTc3NjczNTA0NCwiZXhwIjoxNzc3MzM5ODQ0fQ.8ulyH65FgZAoYybNerTynuhpG2G0u0yjAooi_u16w9E"
+
+      # ♻️ Recycler - view accepted requests
+      - get:
+          url: "/api/pickups/accepted/my"
+          headers:
+            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZGE4NGFkNWQ3ZjU4MDllZjYwZTAwMiIsInJvbGUiOiJSRUNZQ0xFUiIsImlhdCI6MTc3NjczNTA0NCwiZXhwIjoxNzc3MzM5ODQ0fQ.8ulyH65FgZAoYybNerTynuhpG2G0u0yjAooi_u16w9E"
