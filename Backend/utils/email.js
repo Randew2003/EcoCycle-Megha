@@ -1,7 +1,4 @@
 import nodemailer from "nodemailer";
-import dns from "dns";
-
-dns.setDefaultResultOrder("ipv4first");
 
 export async function sendEmail({ to, subject, html }) {
   const user = process.env.EMAIL_USER;
@@ -13,11 +10,6 @@ export async function sendEmail({ to, subject, html }) {
     port: 587,
     secure: false,
     auth: { user, pass },
-
-    tls: {
-      // optional but helps stability
-      rejectUnauthorized: false,
-    },
   });
 
   await transporter.verify();
