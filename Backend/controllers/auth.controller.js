@@ -53,11 +53,21 @@ export const register = async (req, res, next) => {
       purpose: "EMAIL_VERIFY"
     });
 
-    await sendEmail({
-      to: user.email,
-      subject: `Verify your email - ${process.env.APP_NAME || "E-Waste Platform"}`,
-      html: `<p>Your OTP is <b>${otp}</b>. Expires in ${process.env.OTP_EXPIRES_MIN || 10} minutes.</p>`
-    });
+  try {
+  await sendEmail({
+    to: user.email,
+    subject: `Verify your email - ${process.env.APP_NAME || "E-Waste Platform"}`,
+    html: `<p>Your OTP is <b>${otp}</b>. Expires in ${process.env.OTP_EXPIRES_MIN || 10} minutes.</p>`
+  });
+  } catch (emailErr) {
+  console.error("REGISTER EMAIL FAILED:", emailErr);
+
+  // IMPORTANT: still return success OR controlled failure
+  return res.status(500).json({
+    message: "User created but email failed to send",
+    error: process.env.NODE_ENV === "development" ? emailErr.message : undefined
+  });
+  }
 
     res.status(201).json({ message: "Registered. OTP sent to email.", userId: user._id });
   } catch (err) {
