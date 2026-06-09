@@ -56,7 +56,7 @@ const corsOptions = {
 
 // CORS must come before routes, JSON parser, limiter, and error handlers
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 // Body parser
 app.use(express.json());
