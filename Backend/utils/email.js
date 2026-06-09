@@ -1,7 +1,9 @@
-import nodemailer from "nodemailer";
-import dns from "dns";
+// email.js
 
-// Force Node.js to prefer IPv4 instead of IPv6
+import dns from "dns";
+import nodemailer from "nodemailer";
+
+// Force IPv4 first because Render may fail with Gmail IPv6 SMTP
 dns.setDefaultResultOrder("ipv4first");
 
 export async function sendEmail({ to, subject, html }) {
@@ -9,16 +11,19 @@ export async function sendEmail({ to, subject, html }) {
   const pass = process.env.EMAIL_PASS;
   const from = process.env.EMAIL_FROM || user;
 
+  const host = process.env.EMAIL_HOST || "smtp.gmail.com";
+  const port = Number(process.env.EMAIL_PORT) || 587;
+
   if (!user || !pass) {
-    throw new Error("Email credentials are missing");
+    throw new Error("Email credentials are missing. Check EMAIL_USER and EMAIL_PASS.");
   }
 
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || "smtp.gmail.com",
-    port: Number(process.env.EMAIL_PORT) || 587,
-    secure: Number(process.env.EMAIL_PORT) === 465,
+    host,
+    port,
+    secure: port === 465,
 
-    // Important for Render IPv6 problem
+    // Important for Render ENETUNREACH IPv6 issue
     family: 4,
 
     auth: {
