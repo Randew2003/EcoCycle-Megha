@@ -40,8 +40,8 @@ export const register = async (req, res, next) => {
         country: "Sri Lanka"
       }
     });
-
-    // OTP for email verification
+    /*
+    // OTP for email verification (temporarily disabled)
     const otp = generateOtp();
     const otpHash = await bcrypt.hash(otp, 10);
 
@@ -53,24 +53,51 @@ export const register = async (req, res, next) => {
       purpose: "EMAIL_VERIFY"
     });
 
-  try {
-  await sendEmail({
-    to: user.email,
-    subject: `Verify your email - ${process.env.APP_NAME || "E-Waste Platform"}`,
-    html: `<p>Your OTP is <b>${otp}</b>. Expires in ${process.env.OTP_EXPIRES_MIN || 10} minutes.</p>`
-  });
-  } catch (emailErr) {
-  console.error("REGISTER EMAIL FAILED:", emailErr);
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: `Verify your email - ${process.env.APP_NAME || "E-Waste Platform"}`,
+        html: `<p>Your OTP is <b>${otp}</b>. Expires in ${process.env.OTP_EXPIRES_MIN || 10} minutes.</p>`
+      });
+    } catch (emailErr) {
+      console.error("REGISTER EMAIL FAILED:", emailErr);
+      // keep original error handling but temporarily bypass registration failure
+    }
 
-  // IMPORTANT: still return success OR controlled failure
-  return res.status(500).json({
-    message: "Email failed",
-    error: emailErr.message,
-    stack: emailErr.stack
-  });
-  }
+    // Temporarily bypass email verification so users can use the app immediately.
+    user.isEmailVerified = true;
+    await user.save();
 
-    res.status(201).json({ message: "Registered. OTP sent to email.", userId: user._id });
+    const token = generateToken({ id: user._id, role: user.role });
+
+    res.status(201).json({
+      message: "Registered. Email verification temporarily disabled.",
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified
+      }
+    });
+    */
+
+    // SHORT-CIRCUIT: temporary simple response while verification is disabled
+    user.isEmailVerified = true;
+    await user.save();
+    const token = generateToken({ id: user._id, role: user.role });
+    res.status(201).json({
+      message: "Registered. Email verification temporarily disabled.",
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -81,6 +108,10 @@ export const register = async (req, res, next) => {
  * Verifies the OTP sent to user's email and marks email as verified
  */
 export const verifyEmailOtp = async (req, res, next) => {
+  // TEMP: email verification disabled — original logic commented below
+  return res.status(200).json({ message: "Email verification temporarily disabled. Please login." });
+
+  /*
   try {
     const { email, otp } = req.body;
     
@@ -136,6 +167,7 @@ export const verifyEmailOtp = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+  */
 };
 
 /**
@@ -144,65 +176,8 @@ export const verifyEmailOtp = async (req, res, next) => {
  * Only allows resend if email is not already verified
  */
 export const resendOtp = async (req, res, next) => {
-  try {
-    const { email } = req.body;
-
-    if (!email || email.trim() === "") {
-      return res.status(400).json({ message: "Email is required" });
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: normalizedEmail });
-    
-    if (!user) {
-      return res.status(404).json({ message: "User not found with this email" });
-    }
-
-    if (user.isEmailVerified) {
-      return res.status(200).json({ message: "Email is already verified. Please login." });
-    }
-
-    const otp = generateOtp();
-    const otpHash = await bcrypt.hash(otp, 10);
-    const otpExpiresIn = parseInt(process.env.OTP_EXPIRES_MIN || "10", 10);
-
-    // Delete old OTPs first
-    await Otp.deleteMany({ userId: user._id, purpose: "EMAIL_VERIFY" });
-    
-    // Create new OTP
-    const newOtp = await Otp.create({
-      userId: user._id,
-      otpHash,
-      expiresAt: otpExpiryDate(),
-      purpose: "EMAIL_VERIFY"
-    });
-
-    if (!newOtp) {
-      return res.status(500).json({ message: "Failed to generate OTP. Try again." });
-    }
-
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: `Your OTP - ${process.env.APP_NAME || "E-Waste Platform"}`,
-        html: `<p>Your OTP is <b>${otp}</b>. Expires in ${otpExpiresIn} minutes.</p>`
-      });
-    } catch (emailErr) {
-      console.error("Email sending failed:", emailErr.message);
-      return res.status(500).json({ 
-        message: "OTP generated but email sending failed. Check email configuration.",
-        error: process.env.NODE_ENV === "development" ? emailErr.message : undefined
-      });
-    }
-
-    res.json({
-      message: "OTP sent successfully to your email",
-      email: user.email,
-      expiresIn: `${otpExpiresIn} minutes`
-    });
-  } catch (err) {
-    next(err);
-  }
+  // TEMP: resend disabled while email system is being bypassed
+  return res.status(200).json({ message: "Resend OTP disabled temporarily." });
 };
 
 /**
@@ -243,9 +218,12 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    /*
+    // TEMP: skipping email verification requirement so users can login immediately
     if (!user.isEmailVerified) {
       return res.status(403).json({ message: "Email not verified. Please verify OTP." });
     }
+    */
 
     // ✅ success login reset lock fields
     user.loginAttempts = 0;
@@ -298,36 +276,8 @@ export const logout = async (req, res, next) => {
 };
 
 export const forgotPassword = async (req, res, next) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "email required" });
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-
-    // ✅ do not reveal whether email exists
-    if (!user) return res.status(200).json({ message: "If the email exists, OTP will be sent." });
-
-    const otp = generateOtp();
-    const otpHash = await bcrypt.hash(otp, 10);
-
-    await Otp.deleteMany({ userId: user._id, purpose: "RESET_PASSWORD" });
-    await Otp.create({
-      userId: user._id,
-      otpHash,
-      expiresAt: otpExpiryDate(),
-      purpose: "RESET_PASSWORD"
-    });
-
-    await sendEmail({
-      to: user.email,
-      subject: `Password Reset OTP - ${process.env.APP_NAME || "E-Waste Platform"}`,
-      html: `<p>Your password reset OTP is <b>${otp}</b>. Expires in ${process.env.OTP_EXPIRES_MIN || 10} minutes.</p>`
-    });
-
-    res.json({ message: "If the email exists, OTP will be sent." });
-  } catch (err) {
-    next(err);
-  }
+  // TEMP: forgot password flow disabled while email system is bypassed
+  return res.status(200).json({ message: "If the email exists, OTP will be sent (temporarily disabled)." });
 };
 
 /**
@@ -335,30 +285,6 @@ export const forgotPassword = async (req, res, next) => {
  * Resets user password after OTP verification
  */
 export const resetPassword = async (req, res, next) => {
-  try {
-    const { email, otp, newPassword } = req.body;
-    if (!email || !otp || !newPassword) {
-      return res.status(400).json({ message: "email, otp, newPassword required" });
-    }
-    if (newPassword.length < 6) return res.status(400).json({ message: "Password must be 6+ chars" });
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(400).json({ message: "Invalid request" });
-
-    const otpDoc = await Otp.findOne({ userId: user._id, purpose: "RESET_PASSWORD" });
-    if (!otpDoc) return res.status(400).json({ message: "OTP not found. Try again." });
-    if (otpDoc.expiresAt < new Date()) return res.status(400).json({ message: "OTP expired." });
-
-    const ok = await bcrypt.compare(otp.toString(), otpDoc.otpHash);
-    if (!ok) return res.status(400).json({ message: "Invalid OTP" });
-
-    user.passwordHash = await bcrypt.hash(newPassword, 10);
-    await user.save();
-
-    await Otp.deleteMany({ userId: user._id, purpose: "RESET_PASSWORD" });
-
-    res.json({ message: "Password reset successful. Please login." });
-  } catch (err) {
-    next(err);
-  }
+  // TEMP: reset password flow disabled while email system is bypassed
+  return res.status(200).json({ message: "Password reset flow is temporarily disabled." });
 };
