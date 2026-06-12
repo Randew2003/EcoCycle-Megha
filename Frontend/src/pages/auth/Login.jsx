@@ -146,12 +146,14 @@ const Login = () => {
         );
       } else if (errorData?.message?.includes('verify')) {
         setErrorMessage(
-          'Please verify your email first. Redirecting to verification page...'
-        );
-        setTimeout(() => {
-          localStorage.setItem('registeredEmail', formData.email);
-          navigate('/verify-email');
-        }, 2000);
+            'Please verify your email first. (Email verification temporarily disabled.)'
+          );
+          /*
+          setTimeout(() => {
+            localStorage.setItem('registeredEmail', formData.email);
+            navigate('/verify-email');
+          }, 2000);
+          */
       } else {
         setErrorMessage(
           errorData?.message || 'Login failed. Please check your credentials.'
@@ -302,12 +304,14 @@ const Login = () => {
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <label className="block text-sm font-semibold text-slate-900">Password</label>
+                    {/*
                     <Link
                       to="/forgot-password"
                       className="text-xs font-semibold text-emerald-600 transition-colors hover:text-emerald-700"
                     >
                       Forgot password?
                     </Link>
+                    */}
                   </div>
                   <div className="relative">
                     <input

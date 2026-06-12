@@ -212,12 +212,14 @@ const Register = () => {
       setSuccessMessage('Registration successful! Redirecting to email verification...');
       
       // Store email for OTP verification
+      /*
       localStorage.setItem('registeredEmail', formData.email);
       
       // Redirect to email verification page after 2 seconds
       setTimeout(() => {
         navigate('/verify-email');
       }, 2000);
+      */
     } catch (err) {
       const message = err.response?.data?.message || 'Registration failed. Please try again.';
       setErrorMessage(message);
