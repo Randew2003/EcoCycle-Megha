@@ -16,6 +16,7 @@ import {
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import API from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const REGISTER_BENEFITS = [
   {
@@ -88,6 +89,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const { login } = useAuth();
 
   useEffect(() => {
     AOS.init({
@@ -209,17 +211,25 @@ const Register = () => {
         postalCode: formData.postalCode,
       });
 
-      setSuccessMessage('Registration successful! Redirecting to email verification...');
-      
-      // Store email for OTP verification
-      /*
-      localStorage.setItem('registeredEmail', formData.email);
-      
-      // Redirect to email verification page after 2 seconds
-      setTimeout(() => {
-        navigate('/verify-email');
-      }, 2000);
-      */
+      setSuccessMessage('Registration successful! Redirecting to dashboard...');
+
+      // If backend returned token and user, log in and redirect to dashboard
+      const { token, user } = response.data || {};
+      if (token && user) {
+        try {
+          login(user, token);
+
+          setTimeout(() => {
+            if (user.role === 'RECYCLER') {
+              navigate('/recycler/dashboard');
+            } else {
+              navigate('/user/dashboard');
+            }
+          }, 1500);
+        } catch (err) {
+          // fallback: do nothing, keep success message
+        }
+      }
     } catch (err) {
       const message = err.response?.data?.message || 'Registration failed. Please try again.';
       setErrorMessage(message);
