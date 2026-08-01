@@ -16,7 +16,6 @@ import {
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import API from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 
 const validatePassword = (password) => {
   const requirements = {
@@ -88,7 +87,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const { login } = useAuth();
 
   useEffect(() => {
     AOS.init({
@@ -210,25 +208,14 @@ const Register = () => {
         postalCode: formData.postalCode,
       });
 
-      setSuccessMessage('Registration successful! Redirecting to dashboard...');
+      setSuccessMessage(response.data?.message || 'Registration successful! Please verify your email.');
 
-      // If backend returned token and user, log in and redirect to dashboard
-      const { token, user } = response.data || {};
-      if (token && user) {
-        try {
-          login(user, token);
+      localStorage.setItem('registeredEmail', formData.email);
+      localStorage.setItem('userRole', 'USER');
 
-          setTimeout(() => {
-            if (user.role === 'RECYCLER') {
-              navigate('/recycler/dashboard');
-            } else {
-              navigate('/user/dashboard');
-            }
-          }, 1500);
-        } catch (err) {
-          // fallback: do nothing, keep success message
-        }
-      }
+      setTimeout(() => {
+        navigate('/verify-email');
+      }, 1500);
     } catch (err) {
       const message = err.response?.data?.message || 'Registration failed. Please try again.';
       setErrorMessage(message);
