@@ -32,6 +32,7 @@ app.set("trust proxy", 1);
 const allowedOrigins = [
   "http://localhost:5173",
   "https://project-eco-cycle.vercel.app",
+  "https://eco-cycle-megha.vercel.app",
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
